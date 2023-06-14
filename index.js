@@ -27,10 +27,18 @@ async function run() {
         await client.connect();
 
         const sliderCollection = client.db("LearnSportsDB").collection("SliderData");
+        const coursesCollection = client.db("LearnSportsDB").collection("CoursesData");
 
+        // Populer courses data show
         app.get('/slider', async(req, res)=>{
             const result = await sliderCollection.find().toArray();
             res.send(result);
+        })
+
+        // All courses data show
+        app.get('/courses', async(req, res)=>{
+            const result = await coursesCollection.find().toArray();
+            res.send(result)
         })
 
         // Send a ping to confirm a successful connection   
