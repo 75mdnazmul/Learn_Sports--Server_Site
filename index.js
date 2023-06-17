@@ -29,6 +29,7 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
 
+        // DataBase Collection 
         const sliderCollection = client.db("LearnSportsDB").collection("SliderData");
         const coursesCollection = client.db("LearnSportsDB").collection("CoursesData");
         const instructorsCollection = client.db("LearnSportsDB").collection("AllInstructors");
@@ -61,7 +62,7 @@ async function run() {
             const result = await usersCollection.find().toArray();
             res.send(result);
         });
-
+        // user posted
         app.post("/users", async (req, res) => {
             const user = req.body;
             const query = { email: user.email };
@@ -103,7 +104,7 @@ async function run() {
                 res.status(500).json({ error: "Failed to update user role" });
             }
         });
-
+        // user admin data geted
         app.get("/users/admin/:email",  async (req, res) => {
             const email = req.params.email;
             if (req.decoded.email !== email) {
