@@ -10,7 +10,22 @@ const stripe = require("stripe")(process.env.PAYMENT_KEY);
 app.use(cors());
 app.use(express.json());
 
+const verifyJWT = (req, res, next) => {
+    const authorization = req.headers.authorization;
+    if (!authorization) {
+        return res.stutus(401).send({ error: true, message: "Access Denai" });
+    }
+    // bearer token
+    const token = authorization.split(" ")[1];
 
+    jwt.verify(token, process.env.ACCESS_TOKEN_KEY, (err, decoded) => {
+        if (err) {
+            return res.stutus(401).send({ error: true, message: "Access Denai" });
+        }
+        req.decoded = decoded;
+        next();
+    });
+};
 
 // ----------------------------------------------------------------------------------------
 
@@ -114,7 +129,7 @@ async function run() {
             }
         });
 
-        app.get("/users/admin/:email",  async (req, res) => {
+        app.get("/users/admin/:email", verifyJWT, async (req, res) => {
             const email = req.params.email;
             if (req.decoded.email !== email) {
                 res.send({ admin: false });
@@ -125,7 +140,7 @@ async function run() {
             res.send(result);
         });
         // Instructor API ---------------------------------------------------------
-        app.get("/users/instructor/:email",  async (req, res) => {
+        app.get("/users/instructor/:email", verifyJWT, async (req, res) => {
             const email = req.params.email;
             if (req.decoded.email !== email) {
                 res.send({ instructor: false });
@@ -186,7 +201,7 @@ async function run() {
         res.send(result);
       });
       //  select Course
-      app.post("/select",  async (req, res) => {
+      app.post("/select", verifyJWT, async (req, res) => {
         const selectedCourse = req.body;
   
         const existingCourse = await SelectedCollection.findOne(selectedCourse);
@@ -198,26 +213,26 @@ async function run() {
         res.send(result);
       });
   
-      app.get("/select",  async (req, res) => {
+      app.get("/select", verifyJWT, async (req, res) => {
         const result = await SelectedCollection.find().toArray();
         res.send(result);
       });
   
-      app.get("/select/:user",  async (req, res) => {
+      app.get("/select/:user", verifyJWT, async (req, res) => {
         const user = req.params.user;
         const query = { user: user };
         const result = await SelectedCollection.find(query).toArray();
         res.send(result);
       });
   
-      app.get("/selected/:id",  async (req, res) => {
+      app.get("/selected/:id", verifyJWT, async (req, res) => {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
         const result = await SelectedCollection.find(query).toArray();
         res.send(result);
       });
   
-      app.delete("/select/:id",  async (req, res) => {
+      app.delete("/select/:id", verifyJWT, async (req, res) => {
         const id = req.params.id;
   
         const query = { _id: new ObjectId(id) };
@@ -226,7 +241,7 @@ async function run() {
       });
   
       // create payment intent
-      app.post("/create-payment-intent", async (req, res) => {
+      app.post("/create-payment-intent",verifyJWT, async (req, res) => {
         const { price } = req.body;
         const amount = price * 100;
         const paymentIntent = await stripe.paymentIntents.create({
@@ -242,7 +257,7 @@ async function run() {
   
       // payment related api
   
-      app.patch("/payments",  async (req, res) => {
+      app.patch("/payments", verifyJWT, async (req, res) => {
         const payment = req.body;
   
         // Insert payment document only if it doesn't exist
