@@ -12,7 +12,7 @@ app.use(express.json());
 
 // ----------------------------------------------------------------------------------------
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.4botfbx.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -107,9 +107,7 @@ async function run() {
         // user admin data geted
         app.get("/users/admin/:email",  async (req, res) => {
             const email = req.params.email;
-            if (req.decoded.email !== email) {
-                res.send({ admin: false });
-            }
+            
             const query = { email: email };
             const user = await usersCollection.findOne(query);
             const result = { admin: user?.role === "admin" };
@@ -118,9 +116,14 @@ async function run() {
         // Instructor API ---------------------------------------------------------
         app.get("/users/instructor/:email",  async (req, res) => {
             const email = req.params.email;
-            if (req.decoded.email !== email) {
-                res.send({ instructor: false });
-            }
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+            const result = { instructor: user?.role === "instructor" };
+            res.send(result);
+        });
+        // Instructor API ---------------------------------------------------------
+        app.get("/AllInstructorsAddFromDatabase",  async (req, res) => {
+            const email = req.params.email;
             const query = { email: email };
             const user = await usersCollection.findOne(query);
             const result = { instructor: user?.role === "instructor" };
@@ -128,7 +131,7 @@ async function run() {
         });
         // All Courses API
         app.post("/addCourse", async (req, res) => {
-            const addCourse = req.body;
+            const addCourses = req.body;
             const result = await AddCourseCollection.insertOne(addCourses);
             res.send(result);
         });
@@ -139,6 +142,11 @@ async function run() {
             const result = await AddCourseCollection.find(query).toArray();
             res.send(result);
         });
+        // All Courses From Add
+        app.get("/AllCoursesFromAdd", async (req, res) => {
+            const result = await AddCourseCollection.find().toArray();
+            res.send(result);
+        });
         app.delete("/myCourse/:id", async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
@@ -146,11 +154,11 @@ async function run() {
             res.send(result);
         });
         // all Course
-        app.get("/allCourse", async (req, res) => {
+        app.get("/allCourses", async (req, res) => {
             const result = await AddCourseCollection.find().toArray();
             res.send(result);
         });
-        app.get("/allCourse/:email", async (req, res) => {
+        app.get("/allCourses/:email", async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
             const result = await AddCourseCollection.find(query).toArray();
@@ -164,7 +172,7 @@ async function run() {
         });
 
     //  approved
-    app.patch("/allCourse/:id", async (req, res) => {
+    app.patch("/allCourses/:id", async (req, res) => {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
         const { feedback, stutus } = req.body;
@@ -178,8 +186,7 @@ async function run() {
       });
       //  select Course
       app.post("/select",  async (req, res) => {
-        const selectedCourse = req.body;
-  
+        const selectedCourse = req.body;  
         const existingCourse = await SelectedCollection.findOne(selectedCourse);
         if (existingCourse) {
           res.status(400).send("Selected Course already exists");
